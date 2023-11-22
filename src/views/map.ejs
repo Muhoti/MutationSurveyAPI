@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Draw Features</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="/api/ol/ol.css" type="text/css" />
+    <script src="/api/ol/ol.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuvt2CB5r1jLoA5k00VnDkJmrAM3cL52g"></script>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+      }
+
+      .map {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #add {
+        position: absolute;
+        bottom: 1em;
+        right: 1em;
+        height: 3em;
+        width: 3em;
+        color: white;
+        cursor: pointer;
+        width: fit-content;
+        margin: auto;
+        display: block;
+        font-size: small;
+        border: none;
+        border-radius: 5px;
+      }
+
+      #clear {
+        position: absolute;
+        bottom: 1em;
+        left: 1em;
+        height: 3em;
+        width: 3em;
+        color: white;
+        cursor: pointer;
+        width: fit-content;
+        margin: auto;
+        display: block;
+        font-size: small;
+        border: none;
+        border-radius: 5px;
+      }
+
+      #click {
+        position: absolute;
+        bottom: 1em;
+        right: 1em;
+        padding: 15px 20px;
+        font-size: 3em;
+        background-color: orange;
+        border: none;
+        color: white;
+        cursor: pointer;
+        width: fit-content;
+        margin: auto;
+        display: block;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 1px 1px 10px #60606050;
+      }
+
+      #check {
+        position: absolute;
+        top: 1em;
+        right: 0;
+        left: 0;
+        background-color: white;
+        padding: 0 10px 0 10px;
+        color: black;
+        cursor: pointer;
+        width: fit-content;
+        margin: auto;
+        display: block;
+        font-size: small;
+        border: none;
+        border-radius: 5px;
+      }
+      .ripple {
+        position: fixed;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 99999;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.49);
+        display: none;
+        align-items: center;
+        z-index: 999999;
+      }
+      .ripple .container {
+        width: fit-content;
+        margin: auto;
+      }
+
+      .ripple .lds-ripple {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+      .ripple .lds-ripple div {
+        position: absolute;
+        border: 4px solid red;
+        opacity: 1;
+        border-radius: 50%;
+        animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+      }
+      .ripple .lds-ripple div:nth-child(2) {
+        animation-delay: -0.5s;
+      }
+      @keyframes lds-ripple {
+        0% {
+          top: 36px;
+          left: 36px;
+          width: 0;
+          height: 0;
+          opacity: 0;
+        }
+        4.9% {
+          top: 36px;
+          left: 36px;
+          width: 0;
+          height: 0;
+          opacity: 0;
+        }
+        5% {
+          top: 36px;
+          left: 36px;
+          width: 0;
+          height: 0;
+          opacity: 1;
+        }
+        100% {
+          top: 0px;
+          left: 0px;
+          width: 72px;
+          height: 72px;
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" class="map"></div>
+    <p id="check"></p>
+
+    <button id="click">Capture Point</button>
+
+    <div id="loading" class="ripple">
+      <div class="container">
+        <div class="lds-ripple">
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const loading = document.getElementById("loading");
+      let details = {
+        coordinates: {
+          lat: -1.2988549,
+          lng: 36.8160618,
+        },
+      };
+
+      let selectedFeature = null;
+      let pcoordinates = [];
+      let currentCoordinates = [];
+      const check = document.getElementById("check");
+
+      const iconFeature = new ol.Feature({
+        geometry: new ol.geom.Point([
+          details.coordinates.lng,
+          details.coordinates.lat,
+        ]),
+        name: "My Location",
+      });
+
+      const iconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 0.5],
+          scale: 0.3,
+          anchorXUnits: "fraction",
+          anchorYUnits: "fraction",
+          src: "/api/images/icon.svg",
+        }),
+      });
+
+      iconFeature.setStyle(iconStyle);
+
+      const vectorSource = new ol.source.Vector({
+        title: "mylocation",
+        features: [iconFeature],
+      });
+
+      const vectorLayer = new ol.layer.Vector({
+        title: "mylocation",
+      });
+
+      const pointLayer = new ol.layer.Vector({
+        source: vectorSource,
+      });
+
+      // Describing the Polygon layer
+      const polygonLayer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 5,
+            stroke: new ol.style.Stroke({
+              color: "white",
+              width: 1,
+            }),
+            fill: new ol.style.Fill({
+              color: "red",
+            }),
+          }),
+          stroke: new ol.style.Stroke({
+            color: "rgba(0, 0, 255, 1.0)",
+            width: 2,
+          }),
+          fill: new ol.style.Fill({
+            color: "#60606090",
+          }),
+        }),
+      });
+
+      const view = new ol.View({
+        center: [details.coordinates.lng, details.coordinates.lat],
+        zoom: 18,
+        projection: "EPSG:4326",
+      });
+
+      const map = new ol.Map({
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              url: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+            }),
+          }),
+          vectorLayer,
+          pointLayer,
+        ],
+        target: "map",
+        view: view,
+      });
+
+      var nwplotno = null;
+
+      // map.on("click", function (event) {
+      //   var coordinate = event.coordinate;
+      //   console.log(coordinate);
+      //   map.forEachFeatureAtPixel(event.pixel, function (feature, layer) {
+      //     // Check if the feature is the marker
+      //     console.log(`FEATURE IS ${feature}`);
+      //     if (feature && feature.C.name == "My Location") {
+      //       //send data to flutter
+      //       window.computePointCoordinates?.postMessage(
+      //         JSON.stringify({ coordinate: coordinate })
+      //       );
+      //     }
+      //   });
+      // });
+
+      const click = document.getElementById("click");
+      click.onclick = () => {
+        const coords = iconFeature.getGeometry().getCoordinates();
+
+        if (selectedFeature == null) {
+          window.computePointCoordinates?.postMessage(
+            JSON.stringify({
+              coordinate: coords,
+              NewPlotNumber: null,
+            })
+          );
+        } else {
+          console.log(selectedFeature?.C?.NewPlotNumber);
+          window.computePointCoordinates?.postMessage(
+            JSON.stringify({
+              coordinate: coords,
+              NewPlotNumber: selectedFeature?.C?.NewPlotNumber,
+            })
+          );
+        }
+      };
+
+      loadParcels();
+
+      // Disable map dragging
+      var interactions = map.getInteractions();
+      interactions.forEach(function (interaction) {
+        if (interaction instanceof ol.interaction.DragPan) {
+          interaction.setActive(false);
+        }
+      });
+
+      // Function to add polygons to the map
+      function addPolygon(data) {
+        var plg = new ol.geom.Polygon([data]);
+        var ftr = new ol.Feature(plg);
+        let ftrs = [];
+        ftrs.push(ftr);
+        data.map((cds) => {
+          ftrs.push(new ol.Feature(new ol.geom.Point(cds)));
+        });
+        var vs = new ol.source.Vector({
+          features: ftrs,
+        });
+        polygonLayer.setSource(vs);
+      }
+
+      function adjustMarker(lng, lat) {
+        const features = vectorLayer?.getSource()?.getFeatures();
+        const coords = iconFeature.getGeometry().getCoordinates();
+        let changed = false;
+
+        if (features != null) {
+          features.map((feature) => {
+            const polygonGeometry = feature.getGeometry();
+            const result = polygonGeometry?.intersectsCoordinate(coords);
+
+            if (result) {
+              changed = result;
+              selectedFeature = feature;
+              nwplotno = selectedFeature.C.NewPlotNumber;
+            } else {
+              nwplotno = null;
+            }
+          });
+          vectorLayer.setStyle(styleFunction);
+        }
+
+        if (!changed) selectedFeature = null;
+
+        var distance = ol.sphere.getDistance(coords, [lng, lat]);
+        check.textContent = distance.toFixed(0) + " m";
+        currentCoordinates = [lng, lat];
+
+        if (distance > 10.0) {
+          check.style.backgroundColor = "red";
+        } else check.style.backgroundColor = "white";
+      }
+
+      // funtion to send feature data to the android interface
+      function showParcelAttributes(data) {
+        if (
+          window.AndroidInterface &&
+          typeof window.AndroidInterface.displayParcelAttributes === "function"
+        ) {
+          window.AndroidInterface.displayParcelAttributes(JSON.stringify(data));
+          if (window.flutter_inappwebview) {
+            window.flutter_inappwebview.callHandler(
+              "setDataFromJavaScript",
+              JSON.stringify(data)
+            );
+          }
+        } else {
+          console.log(`data is ${data}`);
+        }
+      }
+
+      const styleFunction = (feature) => {
+        if (feature === selectedFeature) {
+          return new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: "orangered",
+              width: 2,
+            }),
+            fill: new ol.style.Fill({
+              color: "rgba(255, 255, 0, 0.5)",
+            }),
+          });
+        } else {
+          return new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: "orangered",
+              width: 2,
+            }),
+            fill: new ol.style.Fill({
+              color: "#60606090",
+            }),
+          });
+        }
+      };
+
+      //loading parcels from geoserver
+      function loadParcels() {
+        loading.style.display = "flex";
+        const geoserverUrl = "/api/geoserver/ows";
+
+        // Define the WFS request parameters
+        const params = {
+          service: "WFS",
+          version: "2.0.0",
+          request: "GetFeature",
+          typeName: "mlims:UpperhillParcels",
+          outputFormat: "application/json",
+        };
+
+        // Construct the WFS request URL
+        const requestUrl = `${geoserverUrl}?${new URLSearchParams(
+          params
+        ).toString()}`;
+        fetch(requestUrl)
+          .then((res) => {
+            if (res.ok) return res.json();
+            else throw new Error("Failed to fetch data from GeoServer.");
+          })
+          .then((data) => {
+            const vectorSource = new ol.source.Vector({
+              features: new ol.format.GeoJSON().readFeatures(data, {
+                dataProjection: "EPSG:4326",
+                featureProjection: "EPSG:4326",
+              }),
+            });
+
+            vectorLayer.setSource(vectorSource);
+            vectorLayer.setStyle(
+              new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                  color: "orangered",
+                  width: 2,
+                }),
+                fill: new ol.style.Fill({
+                  color: "#60606095",
+                }),
+              })
+            );
+            loading.style.display = "none";
+          })
+          .catch((error) => {
+            loading.style.display = "none";
+          });
+      }
+
+      function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      // Create a DragBox interaction
+      var dragInteraction = new ol.interaction.Pointer({
+        handleDownEvent: function (event) {
+          var feature = map.forEachFeatureAtPixel(
+            event.pixel,
+            function (feature) {
+              return feature;
+            }
+          );
+
+          if (feature && feature?.C?.name == "My Location") {
+            // Start dragging the feature
+            this.feature = feature;
+            this.coordinate = event.coordinate;
+          } else return false;
+
+          return !!feature;
+        },
+
+        handleDragEvent: function (event) {
+          var deltaX = event.coordinate[0] - this.coordinate[0];
+          var deltaY = event.coordinate[1] - this.coordinate[1];
+
+          // Move the feature
+          var geometry = this.feature.getGeometry();
+          geometry.translate(deltaX, deltaY);
+
+          this.coordinate[0] = event.coordinate[0];
+          this.coordinate[1] = event.coordinate[1];
+          adjustMarker(event.coordinate[0], event.coordinate[1]);
+        },
+
+        handleUpEvent: function () {
+          const feature = vectorLayer?.getSource()?.getFeatures()[0];
+          if (feature != null) {
+            var distance = ol.sphere.getDistance(
+              feature.C.geometry.flatCoordinates,
+              currentCoordinates
+            );
+            check.textContent = distance.toFixed(0) + " m";
+            if (distance > 10.0) {
+              check.style.backgroundColor = "red";
+            } else check.style.backgroundColor = "white";
+            // Stop dragging the feature
+            this.coordinate = null;
+            this.feature = null;
+          }
+
+          return false;
+        },
+      });
+
+      // Add the drag interaction to the map
+      map.addInteraction(dragInteraction);
+
+      // Double Tap
+
+      // Function to send data to an Android device
+      function pickPoint() {
+        var dataToSend = {
+          featureName: this.feature.get("name"),
+          coordinate: this.coordinate,
+        };
+
+        if (dataToSend != null) {
+          changed = result;
+          selectedFeature = feature;
+          window.setDataFromJavaScript?.postPoint(JSON.stringify(dataToSend));
+        } else {
+          console.log("AndroidInterface or pickPoint function not found.");
+        }
+      }
+    </script>
+  </body>
+</html>
