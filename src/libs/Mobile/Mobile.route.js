@@ -2,7 +2,6 @@ const MobileController = require("./Mobile.controller");
 const verifyToken = require("../Utils/VerifyToken");
 
 exports.MobileRoutes = function (app) {
-  
   app.post("/mobile/register", [MobileController.insert]);
 
   app.post("/mobile/login", [MobileController.MobileLogin]);

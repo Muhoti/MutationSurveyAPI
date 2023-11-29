@@ -14,7 +14,7 @@ exports.createAuth = (MobileData) => {
       return reject({ error: "Body is required!!!" });
     }
 
-    //Encrypt user password
+    //Encrypt us\er password
     MobileData.Password = await bcrypt.hash(MobileData.Password, 10);
 
     //check email
@@ -69,18 +69,11 @@ exports.MobileLogin = (res, MobileData) => {
           result.length != 0 &&
           (await bcrypt.compare(MobileData.Password, result[0].Password))
         ) {
-          if (!result[0].Status)
-            return reject({ error: "Account disabled by administrator!" });
-
           const token = jwt.sign(
             {
               UserID: result[0].UserID,
               Name: result[0].Name,
               Email: result[0].Email,
-              Status: result[0].Status,
-              SubCounty: result[0].SubCounty,
-              Ward: result[0].Ward,
-              Market: result[0].Market,
               Phone: result[0].Phone,
             },
             process.env.TOKEN_KEY,
@@ -96,6 +89,7 @@ exports.MobileLogin = (res, MobileData) => {
 
           resolve({ token: token, success: "Login successful" });
         } else {
+          console.log(error);
           reject({ error: "Authentication failed" });
         }
       },

@@ -23,22 +23,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    Status: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    SubCounty: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    Ward: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    Market: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   });
   return Mobiles;
 };
