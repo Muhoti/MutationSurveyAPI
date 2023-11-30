@@ -72,6 +72,14 @@ app.get("/map", (req, res) => {
   res.render("map");
 });
 
+app.get("/polygon", (req, res) => {
+  res.render("polygon");
+});
+
+app.get("/line", (req, res) => {
+  res.render("line");
+});
+
 Auth.AuthRoutes(app);
 Mobile.MobileRoutes(app);
 Valuation.ValuationRoutes(app);

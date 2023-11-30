@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Draw and Get Coordinates</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="/api/ol/ol.css" type="text/css" />
+    <script src="/api/ol/ol.js"></script>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+
+      .map {
+        position: relative;
+        bottom: 0;
+        right: 0;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100%;
+      }
+
+      #coordinates {
+        margin-top: 10px;
+      }
+
+      .btn-primary {
+        position: absolute;
+        z-index: 1;
+        background-color: darkcyan;
+        color: black;
+        border: 0;
+        border-radius: 20px;
+        font-size: smaller;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+      }
+
+      .btn-primary:hover {
+        background-color: white;
+      }
+
+      .btn-primary p {
+        font-size: smaller;
+        padding: 5px;
+        text-align: center;
+        margin: 0;
+      }
+
+      .clear-button {
+        position: absolute;
+        z-index: 1;
+        background-color: red;
+        color: black;
+        border: 0;
+        border-radius: 20px;
+        font-size: smaller;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        width: fit-content; /* Set the width to match polygonDrawButton */
+      }
+
+      .clear-button:hover {
+        background-color: #f2f2f2;
+      }
+
+      #clearButton {
+        bottom: 20px;
+        right: 20px;
+      }
+
+      #lineDrawButton {
+        bottom: 60px;
+        left: 20px;
+      }
+
+      #polygonDrawButton {
+        bottom: 100px;
+        left: 20px;
+      }
+
+      #clearButton {
+        bottom: 20px;
+        left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <button id="lineDrawButton" class="btn-primary">
+      <p>Start Line</p>
+    </button>
+    <button id="polygonDrawButton" class="btn-primary">
+      <p>Draw Polygon</p>
+    </button>
+    <div id="coordinates"></div>
+
+    <button id="clearButton" class="clear-button">Clear Features</button>
+
+    <script src="https://openlayers.org/en/v6.14.4/build/ol.js"></script>
+    <script>
+      let drawnLineCoordinates = [];
+      let drawnPolygonCoordinates = [];
+
+      //define the map
+      const map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM(),
+          }),
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([36.8219, -1.2921]),
+          zoom: 10,
+        }),
+      });
+
+      //initialise the map
+      const source = new ol.source.Vector();
+      const vector = new ol.layer.Vector({
+        source: source,
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: "blue",
+            width: 2,
+          }),
+          fill: new ol.style.Fill({
+            color: "rgba(255, 255, 255, 0.2)",
+          }),
+          image: new ol.style.Circle({
+            radius: 7,
+            fill: new ol.style.Fill({
+              color: "#ffcc33",
+            }),
+          }),
+        }),
+      });
+      map.addLayer(vector);
+
+      const lineDraw = new ol.interaction.Draw({
+        source: source,
+        type: "LineString",
+      });
+
+      const polygonDraw = new ol.interaction.Draw({
+        source: source,
+        type: "Polygon",
+      });
+
+      const startLineDraw = () => {
+        map.addInteraction(lineDraw);
+        lineDraw.on("drawend", (event) => {
+          const geometry = event.feature.getGeometry();
+          const coordinates = geometry.getCoordinates();
+          drawnLineCoordinates = coordinates.map((coordPair) =>
+            ol.proj.transform(coordPair, "EPSG:3857", "EPSG:4326")
+          );
+          map.removeInteraction(lineDraw);
+        });
+      };
+
+      const startPolygonDraw = () => {
+        map.addInteraction(polygonDraw);
+        polygonDraw.on("drawend", (event) => {
+          const geometry = event.feature.getGeometry();
+          let coordinates = geometry
+            .getCoordinates()[0]
+            .map((coordPair) =>
+              ol.proj.transform(coordPair, "EPSG:3857", "EPSG:4326")
+            );
+          // Connect last point to the first point
+          coordinates.push(coordinates[0]);
+          drawnPolygonCoordinates = coordinates;
+          map.removeInteraction(polygonDraw);
+        });
+      };
+
+      document
+        .getElementById("lineDrawButton")
+        .addEventListener("click", startLineDraw);
+      document
+        .getElementById("polygonDrawButton")
+        .addEventListener("click", startPolygonDraw);
+
+      const clearDrawnFeatures = () => {
+        drawnLineCoordinates = [];
+        drawnPolygonCoordinates = [];
+        source.clear(); // Clear the vector layer source
+      };
+
+      // Event listener for clear button
+      document
+        .getElementById("clearButton")
+        .addEventListener("click", clearDrawnFeatures);
+    </script>
+  </body>
+</html>
