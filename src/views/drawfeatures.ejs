@@ -140,6 +140,20 @@
         justify-content: center;
         text-align: center;
       }
+
+      #areaDisplay {
+        position: absolute;
+        z-index: 1;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        top: 2em;
+        left: 2em;
+        background-color: yellow;
+        padding: 5px;
+        border-radius: 5px;
+      }
     </style>
   </head>
   <body>
@@ -159,6 +173,8 @@
     </button>
 
     <div id="distanceDisplay"></div>
+
+    <div id="areaDisplay"></div>
 
     <script src="https://openlayers.org/en/v6.14.4/build/ol.js"></script>
     <script>
@@ -223,6 +239,8 @@
         });
       };
 
+      const areaDisplay = document.getElementById("areaDisplay");
+
       const startPolygonDraw = () => {
         map.addInteraction(polygonDraw);
         polygonDraw.on("drawend", (event) => {
@@ -236,6 +254,11 @@
           coordinates.push(coordinates[0]);
           drawnPolygonCoordinates = coordinates;
           map.removeInteraction(polygonDraw);
+
+          // Calculate and display the area
+          const polygon = new ol.geom.Polygon([drawnPolygonCoordinates]);
+          const area = Math.round(polygon.getArea() * 100) / 100;
+          alert(`Area of polygon: ${area} square meters`);
         });
       };
 
