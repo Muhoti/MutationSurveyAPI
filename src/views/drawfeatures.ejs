@@ -7,6 +7,11 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
     />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
     <link rel="stylesheet" href="/api/ol/ol.css" type="text/css" />
     <script src="/api/ol/ol.js"></script>
     <style>
@@ -30,9 +35,8 @@
       }
 
       .btn-primary {
-        position: absolute;
+        position: relative;
         z-index: 1;
-        background-color: darkcyan;
         color: black;
         border: 0;
         border-radius: 20px;
@@ -48,6 +52,26 @@
         background-color: white;
       }
 
+      .hover-line {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: calc(100% + 5px); /* Position the text to the right of the icon */
+        transform: translateY(-50%);
+        background-color: white;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      .btn-primary:hover .hover-line {
+        display: block;
+      }
+
+      .btn-primary .fas {
+        margin-right: 5px;
+      }
+
       .btn-primary p {
         font-size: smaller;
         padding: 5px;
@@ -58,7 +82,6 @@
       .clear-button {
         position: absolute;
         z-index: 1;
-        background-color: red;
         color: black;
         border: 0;
         border-radius: 20px;
@@ -68,7 +91,15 @@
         justify-content: center;
         text-align: center;
         cursor: pointer;
-        width: fit-content; /* Set the width to match polygonDrawButton */
+        width: fit-content;
+      }
+
+      .clear-button .fas {
+        margin-right: 5px;
+      }
+
+      .clear-button:hover .hover-line {
+        display: block;
       }
 
       .clear-button:hover {
@@ -78,7 +109,6 @@
       .btn-distance {
         position: absolute;
         z-index: 1;
-        background-color: crimson;
         color: black;
         border: 0;
         border-radius: 120px;
@@ -89,6 +119,14 @@
         text-align: center;
         cursor: pointer;
         width: fit-content;
+      }
+
+      .btn-distance .fas {
+        margin-right: 5px;
+      }
+
+      .btn-distance:hover .hover-line {
+        display: block;
       }
 
       .distance-display {
@@ -107,28 +145,27 @@
         margin: 0;
       }
 
+      .btn-distance .fas {
+        margin-right: 5px;
+      }
+
       #clearButton {
-        bottom: 20px;
-        right: 20px;
+        bottom: 50px;
+        left: 20px;
       }
 
       #lineDrawButton {
-        bottom: 60px;
+        bottom: 120px;
         left: 20px;
       }
 
       #polygonDrawButton {
-        bottom: 100px;
-        left: 20px;
-      }
-
-      #clearButton {
-        bottom: 20px;
+        bottom: 160px;
         left: 20px;
       }
 
       #distanceButton {
-        bottom: 140px;
+        bottom: 80px;
         left: 20px;
       }
 
@@ -150,7 +187,6 @@
         text-align: center;
         top: 2em;
         left: 2em;
-        background-color: yellow;
         padding: 5px;
         border-radius: 5px;
       }
@@ -159,17 +195,24 @@
   <body>
     <div id="map" class="map"></div>
     <button id="lineDrawButton" class="btn-primary">
-      <p>Start Line</p>
+      <i class="fas fa-pencil-alt"></i>
+      <span class="hover-line">Draw Line</span>
     </button>
+
     <button id="polygonDrawButton" class="btn-primary">
-      <p>Draw Polygon</p>
+      <i class="fas fa-square"></i>
+      <span class="hover-line">Draw Polygon</span>
     </button>
     <div id="coordinates"></div>
 
-    <button id="clearButton" class="clear-button">Clear Features</button>
+    <button id="clearButton" class="clear-button">
+      <i class="fas fa-eraser"></i>
+      <span class="hover-line">Clear Drawings</span>
+    </button>
 
     <button id="distanceButton" class="btn-distance">
-      <p>Calculate Distance</p>
+      <i class="fas fa-ruler"></i>
+      <span class="hover-line">Compute Distance</span>
     </button>
 
     <div id="distanceDisplay"></div>

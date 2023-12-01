@@ -76,7 +76,6 @@ app.get("/drawfeatures", (req, res) => {
   res.render("drawfeatures");
 });
 
-
 Auth.AuthRoutes(app);
 Mobile.MobileRoutes(app);
 Valuation.ValuationRoutes(app);
